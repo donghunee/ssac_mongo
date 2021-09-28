@@ -1,4 +1,5 @@
 const user = require("../../models/user");
+const jwtModule = require("../../modules/jwtModule");
 
 const authController = {
   signUp: async (req, res) => {
@@ -32,9 +33,18 @@ const authController = {
     try {
       const result = await user.findOne({ userId, password });
       if (result) {
-        // 로그인 성공ㄴ > 무언가 담긴 객체
+        // 로그인 성공 > 무언가 담긴 객체
+
+        const payload = {
+          userId: result.userId,
+          name: result.name,
+        };
+
+        const token = jwtModule.create(payload);
+
         res.status(200).json({
           message: "로그인 성공",
+          accessToken: token,
         });
       } else {
         // 로그인 실패 > null
