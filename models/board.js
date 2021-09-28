@@ -12,4 +12,24 @@ const boardSchema = new Schema({
   },
 });
 
+// this => model or schema
+boardSchema.statics.checkAuth = async function (params) {
+  const { boardId, writerId } = params;
+  try {
+    const ownResult = await this.findOne({ _id: boardId }); // 게시물의 _id
+    const ownId = ownResult.writer;
+    if (ownId.toString() !== writerId.toString()) {
+      return -1;
+    }
+    return 1;
+  } catch (error) {
+    return -2;
+  }
+};
+
+// this => document or data instance
+boardSchema.methods.checkMe = function () {
+  this.title;
+};
+
 module.exports = mongoose.model("board", boardSchema);

@@ -62,52 +62,36 @@ const boardController = {
     }
   },
   deleteBoard: async (req, res) => {
-    const token = req.headers.authorization;
-    if (!token) {
-      return res.status(409).json({
-        message: "토큰 없음",
-      });
-    }
-
-    const decoded = jwtModule.verify(token);
-    if (decoded === -1) {
-      return res.status(409).json({
-        message: "만료된 토큰입니다.",
-      });
-    } else if (decoded === -2) {
-      return res.status(409).json({
-        message: "유효하지 않은 토큰입니다.",
-      });
-    } else if (decoded === -3) {
-      return res.status(409).json({
-        message: "토큰 에러 입니다.",
-      });
-    }
-
-    let userInfo;
-    try {
-      userInfo = await user.findOne({ userId: decoded.userId });
-    } catch (error) {
-      console.log(error);
-      return res.status(500).json({
-        message: "유효하지 않은 유저입니다.",
-      });
-    }
-
+    const userInfo = req.userInfo;
     const { id } = req.params; // 게시물의 _id
 
     // 일치하는 회원인지 아닌지 확인
-    try {
-      const ownResult = await board.findOne({ _id: id });
-      const ownId = ownResult.writer;
-      if (ownId.toString() !== userInfo._id.toString())
-        return res.status(409).json({ message: "접근 권한이 없습니다." });
-    } catch (error) {
-      console.log(error);
-      res.status(500).json({
+
+    const ownResult = await board.checkAuth({
+      boardId: id,
+      writerId: userInfo._id,
+    });
+    console.log(ownResult);
+    if (ownResult === -1) {
+      return res.status(409).json({ message: "접근 권한이 없습니다." });
+    } else if (ownResult === -2) {
+      return res.status(500).json({
         message: "DB 서버 에러",
       });
     }
+
+    // try {
+    //   const ownResult = await board.findOne({ _id: id }); // 게시물의 _id
+    //   const ownId = ownResult.writer;
+    //   if (ownId.toString() !== userInfo._id.toString())
+    //     // 비교하고자 하는 유저의 _id
+    //     return res.status(409).json({ message: "접근 권한이 없습니다." });
+    // } catch (error) {
+    //   console.log(error);
+    //   res.status(500).json({
+    //     message: "DB 서버 에러",
+    //   });
+    // }
 
     try {
       await board.findByIdAndDelete(id);
@@ -121,50 +105,19 @@ const boardController = {
     }
   },
   updateBoard: async (req, res) => {
-    const token = req.headers.authorization;
-    if (!token) {
-      return res.status(409).json({
-        message: "토큰 없음",
-      });
-    }
-
-    const decoded = jwtModule.verify(token);
-    if (decoded === -1) {
-      return res.status(409).json({
-        message: "만료된 토큰입니다.",
-      });
-    } else if (decoded === -2) {
-      return res.status(409).json({
-        message: "유효하지 않은 토큰입니다.",
-      });
-    } else if (decoded === -3) {
-      return res.status(409).json({
-        message: "토큰 에러 입니다.",
-      });
-    }
-
-    let userInfo;
-    try {
-      userInfo = await user.findOne({ userId: decoded.userId });
-    } catch (error) {
-      console.log(error);
-      return res.status(500).json({
-        message: "유효하지 않은 유저입니다.",
-      });
-    }
-
+    const userInfo = req.userInfo;
     const { id } = req.params;
-
     const { title, content, boardPw } = req.body;
 
-    try {
-      const ownResult = await board.findOne({ _id: id });
-      const ownId = ownResult.writer;
-      if (ownId.toString() !== userInfo._id.toString())
-        return res.status(409).json({ message: "접근 권한이 없습니다." });
-    } catch (error) {
-      console.log(error);
-      res.status(500).json({
+    const ownResult = await board.checkAuth({
+      boardId: id,
+      writerId: userInfo._id,
+    });
+    console.log(ownResult);
+    if (ownResult === -1) {
+      return res.status(409).json({ message: "접근 권한이 없습니다." });
+    } else if (ownResult === -2) {
+      return res.status(500).json({
         message: "DB 서버 에러",
       });
     }
@@ -179,6 +132,7 @@ const boardController = {
         },
         { new: true } // 업데이트 하고 난 후의 결과값 반환
       );
+      console.log(result);
       res.status(200).json({
         message: "수정 완료",
         data: result,
