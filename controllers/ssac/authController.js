@@ -30,6 +30,7 @@ const authController = {
   },
   signIn: async (req, res) => {
     const { userId, password } = req.body;
+    console.log(req.body);
     try {
       const result = await user.findOne({ userId, password });
       if (result) {

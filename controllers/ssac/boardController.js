@@ -5,9 +5,7 @@ const jwtModule = require("../../modules/jwtModule");
 const boardController = {
   createBoard: async (req, res) => {
     const userInfo = req.userInfo;
-
     const { title, content, boardPw } = req.body;
-
     const boardModel = new board({
       title,
       content,
